@@ -1,3 +1,4 @@
+import numpy as np
 def Popen(c,epsilon,Ko,Kc):
     """
     epsilon: energy difference between the open and closed state, without ligand. typically <0
@@ -134,3 +135,203 @@ def generate_activity_matrix(epsilon, Kos, Kcs, c_centers, a_edges):
     discrete_A = np.digitize(continuous_A, a_edges[1:-1])
     
     return discrete_A
+
+import itertools
+import random
+
+def generate_Ks(L=100, n_types=2, n_subunits=5, n_hetero_sample='all',Kc_Amp=10.,eps_Amp=-10.):
+    """
+    Generates Ks, Kos, and Epsilon for N types with flexible heteromer selection.
+    
+    Args:
+        L (int): Number of simulations.
+        n_types (int): Number of base subunit types.
+        n_subunits (int): Number of subunits per receptor.
+        n_hetero_sample (int or str): 
+            - 'all': Generate all possible hetero-combinations.
+            - 0: Generate only Homomers.
+            - int > 0: Generate all Homomers + n randomly selected Heteromers.
+        Kc_Amp (float): amplitude of the uniform distribution from which the highest Kc is drawn
+        eps_Amp (float): amplitude of the uniform distribution from which epsilon is drawn
+    """
+    
+    # 1. Generate all base combinations
+    all_combos_iter = itertools.combinations_with_replacement(range(n_types), n_subunits)
+    all_combos = list(all_combos_iter)
+    
+    # 2. Separate Homomers and Heteromers
+    homomers = [c for c in all_combos if len(set(c)) == 1]
+    heteromers = [c for c in all_combos if len(set(c)) > 1]
+    
+    # 3. Select Heteromers based on input
+    if n_hetero_sample == 'all':
+        selected_hetero = heteromers
+    elif isinstance(n_hetero_sample, int):
+        # Clamp the number to the maximum available heteromers to avoid errors
+        n_to_pick = min(n_hetero_sample, len(heteromers))
+        if n_to_pick > 0:
+            selected_hetero = random.sample(heteromers, n_to_pick)
+            # Optional: Sort them to keep output somewhat deterministic/tidy
+            selected_hetero.sort() 
+        else:
+            selected_hetero = []
+    else:
+        # Fallback if bad input provided
+        print(f"Warning: Unknown n_hetero_sample '{n_hetero_sample}'. returning only Homomers.")
+        selected_hetero = []
+
+    # 4. Final Receptor List: Homomers first, then selected Heteromers
+    # Sorting homomers ensures Index 0 is Type 0, Index 1 is Type 1, etc.
+    homomers.sort() 
+    final_combos = homomers + selected_hetero
+    
+    Nr = len(final_combos)
+    
+    # 5. Pre-allocate arrays
+    Kcs = np.zeros((L, Nr, n_subunits), dtype=float)
+    Kos = np.zeros((L, Nr, n_subunits), dtype=float)
+    epsilon = np.zeros((L, Nr, n_subunits), dtype=float)
+    
+    # 6. Generate Parameters
+    for l in range(L):
+        # --- A. Generate Base Parameters for N types ---
+        base_Kc = []
+        base_Ko = []
+        base_eps = []
+        
+        prev_Kc = 0
+        prev_Ko = None 
+        
+        for i in range(n_types):
+            # Kc increases
+            current_Kc = (prev_Kc if i > 0 else 0) + np.random.random() * Kc_Amp
+            base_Kc.append(current_Kc)
+            
+            # Ko decreases (and Ko <= Kc)
+            if i == 0:
+                current_Ko = np.random.random() * current_Kc
+            else:
+                current_Ko = np.random.random() * prev_Ko
+            base_Ko.append(current_Ko)
+            
+            base_eps.append(np.random.random() * eps_Amp)
+            
+            prev_Kc = current_Kc
+            prev_Ko = current_Ko
+
+        # --- B. Map to Receptor Structure ---
+        for r_idx, combo_indices in enumerate(final_combos):
+            Kcs[l, r_idx, :] = [base_Kc[i] for i in combo_indices]
+            Kos[l, r_idx, :] = [base_Ko[i] for i in combo_indices]
+            
+            combo_eps_values = [base_eps[i] for i in combo_indices]
+            epsilon[l, r_idx, :] = [np.mean(combo_eps_values)] * n_subunits
+            
+    return Kcs, Kos, epsilon
+
+#def generate_Ks(L=100, n_types=2, Nhetero=3):
+#    """
+#    Generates Ks, Kos, and Epsilon for N types.
+#    
+#    Args:
+#        L (int): Number of simulations.
+#        n_types (int): Number of base subunit types.
+#        n_subunits (int): Number of subunits per receptor.
+#        include_hetero (bool): If True, generates all mixed combinations. 
+#                               If False, generates only the N homomers.
+#    """
+#    n_subunits=5
+#    # 1. Define Receptors to build
+#    if Nhetero==0:
+#        all_combos = [(i,) * n_subunits for i in range(n_types)]
+#    else:
+#        all_combos = list(itertools.combinations_with_replacement(range(n_types), n_subunits))
+#        # Sort: Homomers first, then Heteromers
+#        all_combos.sort(key=lambda x: (len(set(x)) > 1, x))
+#        
+#            
+#    if include_hetero:
+#        # Generate all combinations (homo + hetero)
+#        
+#        
+#    elif Nhetero>=all_combos.__len__():
+#        # Generate ONLY Homomers [(0,0,0,0,0), (1,1,1,1,1)...]
+#        all_combos = [(i,) * n_subunits for i in range(n_types)]
+#    
+#    Nr = len(all_combos)
+#    
+#    # 2. Pre-allocate arrays
+#    Kcs = np.zeros((L, Nr, n_subunits), dtype=float)
+#    Kos = np.zeros((L, Nr, n_subunits), dtype=float)
+#    epsilon = np.zeros((L, Nr, n_subunits), dtype=float)
+#    
+#    for l in range(L):
+#        # --- A. Generate Base Parameters for N types ---
+#        # (This remains the same regardless of include_hetero)
+#        base_Kc = []
+#        base_Ko = []
+#        base_eps = []
+#        
+#        prev_Kc = 0
+#        prev_Ko = None 
+#        
+#        for i in range(n_types):
+#            # Kc increases with type index
+#            current_Kc = (prev_Kc if i > 0 else 0) + np.random.random() * 10
+#            base_Kc.append(current_Kc)
+#            
+#            # Ko decreases with type index (and is < Kc)
+#            if i == 0:
+#                current_Ko = np.random.random() * current_Kc
+#            else:
+#                current_Ko = np.random.random() * prev_Ko
+#            base_Ko.append(current_Ko)
+#            
+#            base_eps.append(np.random.random() * -10)
+#            
+#            prev_Kc = current_Kc
+#            prev_Ko = current_Ko
+#
+#        # --- B. Map Base Params to Receptor Structure ---
+#        for r_idx, combo_indices in enumerate(all_combos):
+#            # Map parameters based on the indices in the combination
+#            Kcs[l, r_idx, :] = [base_Kc[i] for i in combo_indices]
+#            Kos[l, r_idx, :] = [base_Ko[i] for i in combo_indices]
+#            
+#            # Epsilon is the average of the subunits
+#            combo_eps_values = [base_eps[i] for i in combo_indices]
+#            epsilon[l, r_idx, :] = [np.mean(combo_eps_values)] * n_subunits
+#            
+#    return Kcs, Kos, epsilon
+
+#def generate_Ks_3hetero():
+#    # draw random parameters # 0 is homo1, 2 is homo2, 3 is hetero
+#    # Ko << Kc
+#    L = 100
+#    Nr = 3
+#    Kcs_3hetero = np.zeros((L,Nr,5),dtype=float)
+#    Kos_3hetero = np.zeros((L,Nr,5),dtype=float)
+#    epsilon_3hetero = np.zeros((L,Nr,5),dtype=float)
+#    for l in range(L):
+#        # select Kc1 \in [0, 10], Ko1 \in [0,Kc1] -> Ko1<=Kc1
+#        Kc1 = np.random.random() * 10
+#        Ko1 = np.random.random() * Kc1
+#        # select Kc2 \in [Kc1, Kc1+10] Kc2>=Kc1 & Ko2 \in [0,Ko1] Ko2<=Ko1 | Ko2<=Kc2
+#        Kc2 = Kc1 + np.random.random()*10
+#        Ko2 = np.random.random()*Ko1
+#        # generate three receptors:
+#        Kcs_3hetero[l,0,:] = [Kc1] * 5 # Homo-1
+#        Kcs_3hetero[l,1,:] = [Kc1] * 3 + [Kc2] * 2 # Hetero
+#        Kcs_3hetero[l,2,:] = [Kc2] * 5 # Homo-2
+#
+#        Kos_3hetero[l,0,:] = [Ko1] * 5 # Homo-1
+#        Kos_3hetero[l,1,:] = [Ko1] * 3 + [Ko2] * 2 # Hetero
+#        Kos_3hetero[l,2,:] = [Ko2] * 5 # Homo-2
+#
+#        # epsilon \in [-10,0] -> epsilon <<1    
+#        eps1 = np.random.random() * -10
+#        eps2 = np.random.random() * -10
+#        epsilon_3hetero[l,0,:] = [eps1] * 5
+#        epsilon_3hetero[l,2,:] = [eps2] * 5
+#        epsilon_3hetero[l,1,:] = [eps1 * 3./5. + eps2*2./5.]*5
+#    return Kcs_3hetero,Kos_3hetero,epsilon_3hetero

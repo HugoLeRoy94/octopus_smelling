@@ -133,6 +133,18 @@ This reasoning is applied to test whether heteromers (receptors built from diffe
     $$a_k = \text{sign}(\Psi(\phi_k) - \Psi_{1/2})$$
     [cite_start][cite: 405]
 
+
+### Meeting, and perspectives
+
+-> Can we find the hetero-pentamer curves from two homo-pentamers one ?
+    |-> this implies making new experiments, with two responsive curves.
+
+-> compare the mutual information with different strategies to generate receptors (mammal, vs insects, vs octopus) -> The question : to how many independant receptors, corresponds N octopus receptors ?
+
+-> Another question could be : how do they optimize the interaction of their homo-pentamers, to have an optimal aray of sensor.
+    |-> In general, and optimal array of sensor must satisfy two conditions to respond optimally to a pool of ligand : (1) be activated half of the time. (2) Any pair of receptors must be uncorrelated [!!! already over !!!].
+    |-> Could this condition explain, at least partially why some receptors are "always" open, vs other are seemingly never responding ?
+
 ### References 
 
 [^1]: Einav, Tal, and Rob Phillips. “Monod-Wyman-Changeux Analysis of Ligand-Gated Ion Channel Mutants.” The Journal of Physical Chemistry B 121, no. 15 (2017): 3813–24. https://doi.org/10.1021/acs.jpcb.6b12672.
