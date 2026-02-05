@@ -67,6 +67,23 @@ def compute_mi(discrete_A,Na):
     MI = np.sum(entr(P_A))
     
     return MI
+def compute_P(discrete_A,Na):
+    L, Nr, Nc = discrete_A.shape
+    
+    N_total = L * Nc
+    
+    events_matrix = discrete_A.transpose(0, 2, 1).reshape(-1, Nr)
+    
+    values, counts = np.unique(events_matrix, axis=0, return_counts=True)
+    
+    Pa = np.zeros(([Na for _ in range(Nr)]),dtype=float)
+
+    for value,count in zip(values,counts):
+        Pa[tuple(value)] = count
+    Pa /= N_total
+
+    return Pa
+    
 
 # --- Helper to Compute Marginal P(a) ---
 def compute_marginal_P(discrete_A, Na):
