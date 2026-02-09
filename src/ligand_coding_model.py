@@ -15,13 +15,21 @@ def Pmax(epsilon,Ko,Kc):
 def PopenNorm(c,epsilon,Ko,Kc):
     return (Popen(c,epsilon,Ko,Kc) - Pmin(epsilon))/(Pmax(epsilon,Ko,Kc) - Pmin(epsilon))
 
-def PmaxHetero(epsilon,Kos,Kcs):
-    return 1/(1+np.prod([Ko/Kc for Ko,Kc in zip(Kos,Kcs)]) * np.exp(-epsilon))
-def PoHetero(c,epsilon,Kos,Kcs):
+def PmaxHetero(epsilon, Kos, Kcs):
+    # Using list comprehension for element-wise division if inputs are lists/arrays
+    ratio_prod = np.prod([Ko/Kc for Ko, Kc in zip(Kos, Kcs)])
+    return 1/(1 + ratio_prod * np.exp(-epsilon))
+def PoHetero(c, epsilon, Kos, Kcs):
     """
-    Kos and Kcs are both list of Kc, and Ko. reapeating values will increase the number of monomer of a type.
+    Calculates absolute open probability for a heteropentamer.
+    c: float or np.array of ligand concentrations
+    epsilon: float, total gating energy
+    Kos, Kcs: lists/arrays of length 5 containing dissociation constants
     """
-    return np.prod([1 + c/Ko for Ko in Kos],axis=0)/(np.prod([1+c/Ko for Ko in Kos],axis=0) + np.exp(-epsilon)*np.prod([1+c/Kc for Kc in Kcs],axis=0))
+    # Ensure c is handled correctly if it's a scalar or array
+    term_o = np.prod([1 + c/Ko for Ko in Kos], axis=0)
+    term_c = np.prod([1 + c/Kc for Kc in Kcs], axis=0)
+    return term_o / (term_o + np.exp(-epsilon) * term_c)
 def PoHeteroNorm_vectorized(c, epsilon, Kos, Kcs):
     """
     Vectorized calculation of the Normalized Open Probability for Hetero-pentamers.
@@ -52,8 +60,12 @@ def PoHeteroNorm_vectorized(c, epsilon, Kos, Kcs):
     delta_P = P_max - P_min
     return np.divide(P_c - P_min, delta_P, where=(delta_P != 0), out=np.zeros_like(P_c))
 
-def PoHeteroNorm(c,epsilon,Kos,Kcs):
-    return (PoHetero(c,epsilon,Kos,Kcs) - Pmin(epsilon))/(PmaxHetero(epsilon,Kos,Kcs) - Pmin(epsilon))
+def PoHeteroNorm(c, epsilon, Kos, Kcs):
+    p_abs = PoHetero(c, epsilon, Kos, Kcs)
+    p_min = Pmin(epsilon)
+    p_max = PmaxHetero(epsilon, Kos, Kcs)
+    # Normalize
+    return (p_abs - p_min) / (p_max - p_min)
 
 def generate_discrete_curve(epsilon, Kos, Kcs, Nc, c_min, c_max, Na):
     """

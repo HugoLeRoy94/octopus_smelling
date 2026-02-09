@@ -55,25 +55,25 @@ $$
 \text{renormalized current} = \frac{I(c) - I_\text{min}}{I_\text{max}-I_\text{min}} = \frac{p_\text{open}(c) - p_\text{min}}{p_\text{max}-p_\text{min}}
 $$
 
-## 2. Single Receptor Characteristics: The Physical Model of a Single Receptor
+## 2. Single Receptor Characteristics
+
+### 2.1 MWC Model
 
 Each receptor is made of $k_\text{sub}$ sub-units among $n_\text{unit}$ possible units.
 We denote $\bm{r} = (r_0 \cdots r_{k_\text{sub}}) \in \mathbb{R}^{n_\text{unit} \times k_\text{sub}}$ the identity of a receptor characterized by the identity of each of the units that composes it. 
 The response of a receptor $\bm{r}$ to a ligand $\ell$ at concentration $c$ can be written using the MWC model for ion channel opening:
 $$
-p_o^r(c,\ell) = \frac{\prod_{u\in \mathcal{U}} (1+c/K_o^{(u,\ell)})}{\prod_{u\in \mathcal{U}} (1+c/K_o^{(u,\ell)}) + e^{-\epsilon}\prod_{u\in \mathcal{U}}(1+c/K_c^{(u,\ell)})}
+p_o^r(c,\ell) = \frac{\prod_{u\in \mathcal{U}} (1+c/K_o^{(u,\ell)})}{\prod_{u\in \mathcal{U}} (1+c/K_o^{(u,\ell)}) + e^{-\epsilon_\mathcal{U}}\prod_{u\in \mathcal{U}}(1+c/K_c^{(u,\ell)})}
 $$
 
+<!--
 ---
-<font color="red"> Need to revisit this </font>
-
 We write it more generally for a given couple $(r,\ell) = (\mathcal{U}_r,\ell) = i$:
 $$
 f[\theta_i](c) = \frac{\prod_{u\in \mathcal{U_i}} (1+c/\theta_{(i,1)}^u)}{\prod_{u\in \mathcal{U_i}} (1+c/\theta_{(i,1)}^u) + e^{-\theta_{(i,0)}}\prod_{u\in \mathcal{U_i}}(1+c/\theta_{(i,2)})}
 $$
-
 ---
-
+-->
 Where the $K$'s are called the affinities and defined by:
 $$
 K_o^{(r,\ell)} = \exp\left[ \Delta E_o^{r,\ell} \right]
@@ -82,7 +82,13 @@ $$
 K_c^{(r,\ell)} = \exp\left[ \Delta E_c^{r,\ell} \right]
 $$
 Each affinity correspond to the response of a sub-unit to a ligand.
-$\epsilon$ is the energy difference between the closed and opened state of the channel when there are no ligands, it is thus independent of $\ell$.
+$\epsilon_\mathcal{U}$ is the energy difference between the closed and opened state of the channel when there are no ligands, it is thus independent of $\ell$.
+We write it as the simple sum of the contribution of each individual unit:
+$$
+\epsilon_\mathcal{U} = \sum_u \epsilon_u
+$$
+
+## 2.3
 
 ## 3. Generating Ligand/Unit interactions : The Environment
 
