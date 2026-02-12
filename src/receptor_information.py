@@ -48,7 +48,7 @@ def index_to_response(index, Nr, Na):
 
 from scipy.special import entr
 
-def compute_mi(discrete_A,Na):
+def compute_mi(discrete_A):
 
     L, Nr, Nc = discrete_A.shape
     
@@ -100,57 +100,3 @@ def compute_marginal_P(discrete_A, Na):
     counts = np.bincount(flat_A, minlength=Na)
     # Normalize
     return counts / flat_A.size
-
-#def analyze_activity_histogram_and_mi(discrete_A, Na):
-#    """
-#    Computes the histogram of activity vectors and the Mutual Information.
-#    
-#    Formula: MI = log(N_total) - Sum( (M_A / N_total) * log(M_A) )
-#    
-#    Args:
-#        discrete_A: Array of shape (L, Nr, Nc).
-#        Na: Number of activity bins.
-#    """
-#    L, Nr, Nc = discrete_A.shape
-#    
-#    # 1. Define N_total (Total number of events 3L in toy model, L*Nc here)
-#    N_total = L * Nc
-#    
-#    # 2. Reshape the matrix to list of events (N_total, Nr)
-#    # Transpose to (L, Nc, Nr) so the receptor vector is the last dimension
-#    # Reshape flattens L and Nc into one dimension
-#    events_matrix = discrete_A.transpose(0, 2, 1).reshape(-1, Nr)
-#    
-#    # 3. Convert each event vector to a unique index
-#    indices = response_to_index_vectorized(events_matrix, Na)
-#    
-#    # 4. Compute Multiplicity M_A (Histogram)
-#    # The maximum possible index is Na^Nr
-#    max_state_index = Na ** Nr
-#    
-#    # np.bincount is a fast histogram for integers
-#    # M_all[idx] = count of how many times state 'idx' appeared
-#    M_all = np.bincount(indices, minlength=max_state_index)
-#    
-#    # 5. Filter to keep only observed states (where M_A > 0)
-#    observed_mask = M_all > 0
-#    
-#    # The Multiplicities (M_A) of observed states
-#    M_A = M_all[observed_mask]
-#    
-#    # The indices of observed states
-#    observed_indices = np.where(observed_mask)[0]
-#    
-#    # 6. Compute Probabilities P(A)
-#    P_A = M_A / N_total
-#    
-#    # 7. Compute Mutual Information
-#    # Term 1: log(N_total)
-#    term1 = np.log(N_total)
-#    
-#    # Term 2: Sum_A [ (M_A / N_total) * log(M_A) ]
-#    term2 = np.sum( P_A * np.log(M_A) )
-#    
-#    MI = term1 - term2
-#    
-#    return MI, M_A, P_A
