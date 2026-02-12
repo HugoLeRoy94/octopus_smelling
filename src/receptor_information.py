@@ -83,7 +83,25 @@ def compute_P(discrete_A,Na):
     Pa /= N_total
 
     return Pa
+
+def compute_P_sparse(discrete_A):
+    L, Nr, Nc = discrete_A.shape
+    N_total = L * Nc
     
+    events_matrix = discrete_A.transpose(0, 2, 1).reshape(-1, Nr)
+    
+    # Get unique rows and their counts
+    values, counts = np.unique(events_matrix, axis=0, return_counts=True)
+    
+    # Calculate probabilities for observed states only
+    probs = counts / N_total
+    
+    # Return a dictionary mapping {State_Tuple: Probability}
+    # distinct_states is a list of tuples, e.g., [(0,1,0...), (1,1,0...)]
+    distinct_states = [tuple(v) for v in values]
+    
+    return dict(zip(distinct_states, probs))
+
 
 # --- Helper to Compute Marginal P(a) ---
 def compute_marginal_P(discrete_A, Na):

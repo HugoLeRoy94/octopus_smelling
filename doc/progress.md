@@ -41,6 +41,17 @@
 - Pocket: the region of the unit within which a ligand bind.
 - Residue: a piece of molecule that composes the pocket or/and a ligand.
 
+## Translation from Experimentalist
+
+
+|**Experimentalist Term**|**Physicist / MWC Term**|**Definition in Context**|
+| --- | --- | --- |
+| **Efficacy** | **Response Amplitude ($I_{max}$)** | The peak response (current) relative to other receptors. |
+| **Potency / Sensitivity** | **Apparent Affinity ($EC_{50}$)** | The ligand concentration required to reach half-maximal activation.|
+| **Selectivity / Tuning** | **Ligand Specificity ($K_d$)** | The breadth of ligands a receptor responds to (e.g., "broad" vs. "narrow").|
+| **Cooperativity** | **Allosteric Coupling** | How subunit interactions (like heteropentamers) affect the opening curve.|
+| **Diversity** | **Mutual Information** | The capacity of the receptor array to distinguish between different ligands.|
+
 
 ## 1. Experimental procedure
 
@@ -235,6 +246,22 @@ $$
 $$
 \frac{\partial H(\mathcal{A})}{\partial w} = \frac{\partial}{\partial w}\left\{ E\left[ \ln\left[\int d\theta \frac{p(\theta)}{F'(c,\theta)} \right] \right] \right\}. 
 $$
+
+
+## 5. Fixed concentration problem
+
+We consider an array that respond to a fixed concentration.
+
+### 5.1 Empirical measurement
+
+We start with a matrix of response $\bar{R} \in \mathbb{R}^{N \times L}$, where $N$ is the number of receptors, and $L$ the number of Ligand. We compute the mutual information between the activity of the array $\mathcal{A}$ and the **identity** of the ligand, thus dismissing the information of the concentration:
+$$
+MI(l,\mathcal{A}) = H(\mathcal{A}) - H(\mathcal{A} | l)
+$$
+because the activity of the array is deterministically determined by the identity of the ligand $l$ (at the fixed concentration $c^*$): $H(\mathcal{A} |l)=0$. Thus, we are simply computing the entropy of the array activity $H(\mathcal{A})$.
+
+Each receptor's activity consist in a single number $a\in[0,1]$. We assume that the system only sees a binned version of this signal into $n_b$ bins. Thus, instead of a continuous number between $[0,1]$ we consider the activity to be a boolean array of size $n_b$.
+
 
 
 <!--

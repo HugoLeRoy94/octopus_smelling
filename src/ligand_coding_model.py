@@ -1,13 +1,5 @@
 import numpy as np
-def Popen(c,epsilon,Ko,Kc):
-    """
-    epsilon: energy difference between the open and closed state, without ligand. typically <0
-    Kc: ligand dissociation constant when channel in closed state
-    Ko: open-state dissociation constant : Ko_ = Ko exp(beta -epsilon/5)
-    c: ligand concentration
-    """
-    c = c + 1e-18
-    return (1+c/Ko)**5/((1+c/Ko)**5+np.exp(-epsilon)*(1+c/Kc)**5)
+
 def Pmin(epsilon):
     return 1/(1+np.exp(-epsilon))
 def Pmax(epsilon,Ko,Kc):
@@ -29,7 +21,8 @@ def PoHetero(c, epsilon, Kos, Kcs):
     # Ensure c is handled correctly if it's a scalar or array
     term_o = np.prod([1 + c/Ko for Ko in Kos], axis=0)
     term_c = np.prod([1 + c/Kc for Kc in Kcs], axis=0)
-    return term_o / (term_o + np.exp(-epsilon) * term_c)
+    term_eps = np.sum(epsilon,axis=0)
+    return term_o / (term_o + np.exp(-term_eps) * term_c)
 def PoHeteroNorm_vectorized(c, epsilon, Kos, Kcs):
     """
     Vectorized calculation of the Normalized Open Probability for Hetero-pentamers.
@@ -106,7 +99,39 @@ def generate_discrete_curve(epsilon, Kos, Kcs, Nc, c_min, c_max, Na):
     discrete_curve = np.digitize(continuous_values, a_edges)
     return c_edges,a_centers[discrete_curve-1]
 
-def generate_activity_matrix(epsilon, Kos, Kcs, c_centers, a_edges):
+def generate_continuous_A(epsilon,Kos,Kcs,c_centers,a_edges,indices_to_avg=None):
+    # --- 1. Prepare Input Shapes for Broadcasting ---
+    
+    # c: Add axes for L, Nr, and Subunit -> (1, 1, 1, Nc)
+    c_grid = c_centers[np.newaxis, np.newaxis, np.newaxis, :]
+    
+    # Kos, Kcs: Add axis for Concentration -> (L, Nr, 5, 1)
+    Kos_grid = Kos[:, :, :, np.newaxis]
+    Kcs_grid = Kcs[:, :, :, np.newaxis]
+    
+    # epsilon: All 5 subunits share the same epsilon for the complex global transition.
+    # We take the first value and add axes -> (L, Nr, 1, 1)
+    eps_grid = epsilon[:, :, 0][:, :, np.newaxis, np.newaxis]
+    
+    # --- 2. Calculate Continuous Response ---
+
+    continuous_A = PoHeteroNorm_vectorized(c_grid, eps_grid, Kos_grid, Kcs_grid)
+
+    if indices_to_avg is not None:
+        all_indices = np.arange(continuous_A.shape[1])
+        remaining_indices = np.delete(all_indices, indices_to_avg) # [0, 1]
+        # 2. Extract the "untouched" rows
+        untouched_part = continuous_A[:, remaining_indices, :]
+        # 3. Calculate the mean of the "target" rows
+        # We use axis=1 to average across the row dimension
+        avg_part = np.mean(continuous_A[:, indices_to_avg, :], axis=1, keepdims=True)
+        # 4. Combine them
+        continuous_A = np.concatenate([untouched_part, avg_part], axis=1)
+
+    return continuous_A
+    
+
+def generate_activity_matrix(epsilon, Kos, Kcs, c_centers, a_edges,indices_to_avg=None):
     """
     Generates the discrete activity matrix for a set of ligands.
     
@@ -123,26 +148,13 @@ def generate_activity_matrix(epsilon, Kos, Kcs, c_centers, a_edges):
     L, Nr, penta = epsilon.shape
     Nc = len(c_centers)
     
-    # --- 1. Prepare Input Shapes for Broadcasting ---
-    
-    # c: Add axes for L, Nr, and Subunit -> (1, 1, 1, Nc)
-    c_grid = c_centers[np.newaxis, np.newaxis, np.newaxis, :]
-    
-    # Kos, Kcs: Add axis for Concentration -> (L, Nr, 5, 1)
-    Kos_grid = Kos[:, :, :, np.newaxis]
-    Kcs_grid = Kcs[:, :, :, np.newaxis]
-    
-    # epsilon: All 5 subunits share the same epsilon for the complex global transition.
-    # We take the first value and add axes -> (L, Nr, 1, 1)
-    eps_grid = epsilon[:, :, 0][:, :, np.newaxis, np.newaxis]
-    
     # --- 2. Calculate Continuous Response ---
-    continuous_A = PoHeteroNorm_vectorized(c_grid, eps_grid, Kos_grid, Kcs_grid)
+    continuous_A = generate_continuous_A(epsilon,Kos,Kcs,c_centers,a_edges,indices_to_avg)
     
     # --- 3. Discretize ---
     # Clip to ensure numerical stability doesn't push values < 0 or > 1
     continuous_A = np.clip(continuous_A, 0, 1)
-    
+
     # Digitize using inner edges as thresholds
     discrete_A = np.digitize(continuous_A, a_edges[1:-1])
     
