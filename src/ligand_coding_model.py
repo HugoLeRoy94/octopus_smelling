@@ -258,20 +258,27 @@ def generate_Ks(L=100, n_types=2, n_subunits=5, n_hetero_sample='all', Kc_Amp=10
                     if r < limit:
                         reservoirs[unique_count][r] = c
 
-    # 4. Flatten Results
-    if mode == 'all':
-        selected_hetero = reservoirs['all']
-    elif mode == 'total':
-        selected_hetero = reservoirs['total']
+# 4. Flatten and Sort Results by Complexity (Size of Set)
+    selected_hetero = []
+
+    if mode == 'all' or mode == 'total':
+        # Combine lists if needed (usually just one exists)
+        raw_heteros = reservoirs.get('all', []) + reservoirs.get('total', [])
+        
+        # Sort first by "number of unique types" (complexity), then numerically
+        selected_hetero = sorted(raw_heteros, key=lambda x: (len(set(x)), x))
+
     elif mode == 'stratified':
-        selected_hetero = []
-        for size in reservoirs:
-            selected_hetero.extend(reservoirs[size])
-            
-    # Sort for tidiness (optional but nice for debugging)
+        # Loop through keys in order (2, 3, 4...) to maintain complexity order
+        for size in sorted(reservoirs.keys()):
+            # Sort the combos within that specific size bucket numerically
+            bucket_combos = sorted(reservoirs[size])
+            selected_hetero.extend(bucket_combos)
+
+    # Homomers are already sorted (0,0..), (1,1..)
     homomers.sort()
-    selected_hetero.sort()
     
+    # Final Concatenation: Homomers -> Hetero(2) -> Hetero(3) -> ...
     final_combos = homomers + selected_hetero
     
     Nr = len(final_combos)
