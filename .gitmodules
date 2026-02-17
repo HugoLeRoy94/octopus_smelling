@@ -1,0 +1,3 @@
+[submodule "optimization"]
+	path = optimization
+	url = https://github.com/username/optimization-submodule.git
