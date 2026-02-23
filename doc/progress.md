@@ -1,4 +1,4 @@
-# Progresses
+# Octopus Chemosensing
 
 ## Notations
 - $k_\text{sub}$: number of sub-units in a receptor (typically 5)
@@ -25,7 +25,7 @@
 
 - $\theta = \{(\Delta E_\alpha^{(r,\ell)})_{\alpha,\ell}, \epsilon_r\}_r = \{\theta_r\}_r$ compact indexing for the characteristics of a channel
 
-- $\bar{\Mu} = \{ \mu_\alpha^{(r,f)} \}_{r,f}$ and  $\bar{\Sigma} = \{ \sigma_\alpha^{(r,f)}\}_{r,f}$: respectively the matrix of the mean and std deviation of the distribution from which the energies are drawn for the receptor $r$ in response to the family of ligands $f$. <font color="red"> should the matrices depends on alpha, or should one be a shifted version of the other. In anyway the shift should be the same for every ligands, for a given receptor</font>
+- $\bar{M} = \{ \mu_\alpha^{(r,f)} \}_{r,f}$ and  $\bar{\Sigma} = \{ \sigma_\alpha^{(r,f)}\}_{r,f}$: respectively the matrix of the mean and std deviation of the distribution from which the energies are drawn for the receptor $r$ in response to the family of ligands $f$. <font color="red"> should the matrices depends on alpha, or should one be a shifted version of the other. In anyway the shift should be the same for every ligands, for a given receptor</font>
 
 - $w$ generic name for $\mu_\alpha^{(r,f)}$ and $\sigma_\alpha^{(r,f)}$.
 
@@ -71,27 +71,45 @@ $$
 ### 2.1 MWC Model
 
 Each receptor is made of $k_\text{sub}$ sub-units among $n_\text{unit}$ possible units.
-We denote $\bm{r} = (r_0 \cdots r_{k_\text{sub}}) \in \mathbb{R}^{n_\text{unit} \times k_\text{sub}}$ the identity of a receptor characterized by the identity of each of the units that composes it. 
-The response of a receptor $\bm{r}$ to a ligand $\ell$ at concentration $c$ can be written using the MWC model for ion channel opening:
+We denote $\textbf{r} = (r_0 \cdots r_{k_\text{sub}}) \in \mathbb{R}^{n_\text{unit} \times k_\text{sub}}$ the identity of a receptor characterized by the identity of each of the units that composes it. 
+The response of a receptor $\textbf{r}$ to a ligand $\ell$ at concentration $c$ can be written using the MWC model for ion channel opening:
 $$
 p_o^r(c,\ell) = \frac{\prod_{u\in \mathcal{U}} (1+c/K_o^{(u,\ell)})}{\prod_{u\in \mathcal{U}} (1+c/K_o^{(u,\ell)}) + e^{-\epsilon_\mathcal{U}}\prod_{u\in \mathcal{U}}(1+c/K_c^{(u,\ell)})}
 $$
 
-<!--
----
-We write it more generally for a given couple $(r,\ell) = (\mathcal{U}_r,\ell) = i$:
+Where the $K$'s are called the affinities.
+### 2.2 Microscopic model of a receptor
+To make the link between the dissociation constant, we consider the chemical reactions:
 $$
-f[\theta_i](c) = \frac{\prod_{u\in \mathcal{U_i}} (1+c/\theta_{(i,1)}^u)}{\prod_{u\in \mathcal{U_i}} (1+c/\theta_{(i,1)}^u) + e^{-\theta_{(i,0)}}\prod_{u\in \mathcal{U_i}}(1+c/\theta_{(i,2)})}
+\begin{aligned}
+&C_o + L \rightarrow C_o L\\
+&C_c + L \rightarrow C_c L,
+\end{aligned}
 $$
----
--->
-Where the $K$'s are called the affinities and defined by:
+where $C_o$ and $C_c$ are respectively the channel in the open and closed state, $L$ is the ligand, and $C_oL$ and $C_cL$ are the ligand-channel dimers.
+The the dissociation constants reads :
+$$
+\begin{aligned}
+K_o &= \frac{[C_o][L]}{[C_oL]}\\
+K_c &= \frac{[C_c][L]}{[C_cL]},
+\end{aligned}
+$$
+where $[C_o]$ and $[C_c]$ are respectively the concentration of open and closed channel, whereas, $[L]$ is the concentration of ligand in solution. From a statistical mechanics point of view, we can write for any specie $\alpha$ $[\alpha] \propto p(\alpha) = 1/Z e^{\beta E_\alpha}$. Where $Z$ is the partition function of the system. As a result, we write the dissociation constants as:
 $$
 K_o^{(r,\ell)} = \exp\left[ \Delta E_o^{r,\ell} \right]
 $$
 $$
-K_c^{(r,\ell)} = \exp\left[ \Delta E_c^{r,\ell} \right]
+K_c^{(r,\ell)} = \exp\left[ \Delta E_c^{r,\ell} \right],
 $$
+with:
+$$
+\begin{aligned}
+\Delta E_o^{(r,\ell)} &= E(C_oL) - E(C_o) - E(L) \\
+\Delta E_c^{(r,\ell)} &= E(C_cL) - E(C_c) - E(L)
+\end{aligned}
+$$
+Notice that a good ion channel has $K_c > K_o$ (greater dissociation when closed). With that convention that means $\Delta E_c > \Delta E_o$.
+
 Each affinity correspond to the response of a sub-unit to a ligand.
 $\epsilon_\mathcal{U}$ is the energy difference between the closed and opened state of the channel when there are no ligands, it is thus independent of $\ell$.
 We write it as the simple sum of the contribution of each individual unit:
@@ -99,7 +117,31 @@ $$
 \epsilon_\mathcal{U} = \sum_u \epsilon_u
 $$
 
-## 2.3
+### 2.3 Parameters Degeneracy
+
+in [http://dx.doi.org/10.1021/acs.jpcb.6b12672] supplementary material, p.S25, they look at the hessian matrix:
+$$
+H_{i,j} = \frac{\partial p_o}{\partial x_i \partial x_j}
+$$,
+where $x = \beta (\epsilon, \Delta E_o, \Delta E_c)$. They find that the Hessian has three eigenvalues : $\{2\times 10^{-2}, 9\times  10^{-4}, 2\times 10^{-7} \}$. The last eigen value has a eigen vector $(2,1,0)$, and is sensitively smaller than the two others, highlighting a sloopy mode. in the $(2,1,0)$ the parameter $e^{-\beta \epsilon/2}K_o$ is constant. As a result, we can rewrite the opening probability assuming that:
+$\left(e^{\beta \epsilon/2} + e^{\beta \epsilon/2} \frac{c}{K_o}\right)^2+\left(1+\frac{c}{K_c}\right)^2\approx\left(e^{\beta \epsilon/2}\frac{c}{K_o}\right)^2$
+$$
+p_o^{(r,l)}(c) = \frac{\prod_u \left(\frac{c}{\tilde{K}_o^{u,l}}\right)}{\prod_u\left(\frac{c}{\tilde{K}_o^{(u,l)}} \right) + \prod_u\left(1+\frac{c}{K_c^{(u,l)}} \right)},
+$$
+where $\tilde{K}_o = K_o e^{\beta \epsilon }$
+
+### 2.4 Adimensional activation curve
+
+We now write the final activation curve by adimensionalizing the concentration using $EC_{50}$ the concentration at half activation. In the limit $1\ll e^{\beta \epsilon/k_\text{unit}} \ll \left(\frac{K_c}{K_o}\right)^{k_\text{unit}}$, we have
+$$
+[EC_{50}^{(u,l)}] = \left( \prod_{u=1}^{k_\text{unit}} \tilde{K_o^{(u,l)}} \right)^{1/k_\text{unit}}.
+$$
+In that case, we can write the opening probability:
+$$
+p_o^{(r,l)}(x) = \frac{x^{k_\text{unit}}}{x^{k_\text{unit}} + \prod_{u=1}^{k_\text{unit}}\left( 1  + \frac{x[EC_{50}^{(u,l)}]}{K_c^{(u,l)}}\right)} = \frac{x^{k_\text{unit}}}{x^{k_\text{unit}} + \prod_{u=1}^{k_\text{unit}}\left( 1  + \delta^{(u,l)} x\right)},
+$$
+where $x = c /$
+
 
 ## 3. Generating Ligand/Unit interactions : The Environment
 
@@ -110,7 +152,7 @@ $$
 -> Following previous work on drosophilia [10.1038/srep21841] and humang [10.1038/sdata.2015.2], we model the distribution of interaction energy between a family and given receptor as Gaussian.
 -> This can be interepreted as a consequence of the central limit theorem, where the interaction energy represents an effective average of many microscopic interactions.
 
--> The physical characteristics of an array of receptor is model through two matrices: $\bar{\Sigma}= \{ \mu_\alpha^{(r,f)} \}_{r,f}$ and $\bar{\Mu}= \{ \sigma_\alpha^{(r,f)}\}_{r,f}$. Where each entry gives the mean or standard deviation of a given receptor to a family of ligand. Notice that this isn't a squared matrix.
+-> The physical characteristics of an array of receptor is model through two matrices: $\bar{\Sigma}= \{ \mu_\alpha^{(r,f)} \}_{r,f}$ and $\bar{M}= \{ \sigma_\alpha^{(r,f)}\}_{r,f}$. Where each entry gives the mean or standard deviation of a given receptor to a family of ligand. Notice that this isn't a squared matrix.
 -> In the rest, we will optimize these matrices to maximize mutual information between ligands identity/concentration and activity of the array.
 
 On top of that, the concentration distribution of each Ligands is assumed to be Gaussian as well. We draw the average $\mu_c^\ell$, and standard deviation $\sigma_c^\ell$, each of them drawn from a uniform distribution.<font color="red"> we should think about it again</font>
@@ -143,13 +185,130 @@ $$
 We consider the mapping between affinities, and activity as deterministic, noiseless: $H(A | (c,\ell)) = 0$.
 Thus we want to maximize 
 $$
-H(\mathcal{A}) = \sum_\mathcal{A} p(\mathcal{A}) \log[p(\mathcal{A})] = \mathbb{E}\left[ \log[p(\mathcal{A})] \right].
+H(\mathcal{A}) = -\sum_\mathcal{A} p(\mathcal{A}) \log[p(\mathcal{A})] = \mathbb{E}\left[ \log[p(\mathcal{A})] \right].
 $$
-Consequently, the probability distribution of activation is the quantity that needs to be optimized. To do so, we compute its gradient with respect to any parameters of $\bar{M}$, or $\bar{\Sigma}$:
+
+### 4.1 Single Receptor Problem
+
+#### 4.1.1 Kernel Density Estimator
+
+Let us first consider a single receptor, and its probability distribution of activation $p(a)$. Starting from the empirical probability distribution:
+$$
+\tilde{p}(a) = \frac{1}{N}\sum_{i=0}^{N_\text{sample}} \delta(a_i - a),
+$$
+where $N_\text{sample}$ is the number of sampled odors. We approximate the real density probability distribution using a Gaussian Kernel:
+$$
+\hat{p}(a) \approx \frac{1}{Nh} \sum_{i=0}^{N_\text{sample}} \frac{1}{h\sqrt{2\pi}} \exp\left[-\frac{(a-a_i)^2}{2h^2} \right],
+$$
+where $h$ is the bandwidth of the kernel. Let us start with a simple rule of thumb for $h$. Assuming that the resulting distribution is somewhat Gaussian, we find:
+$$
+h \approx 1.06 \tilde{\sigma} N_\text{sample}^{-1/5},
+$$
+where 
+$$
+\tilde{\sigma} = \sqrt{\frac{1}{n-1} \sum_{i=0}^{N_\text{sample}}(a_i - \bar{a})^2}
+$$
+is the empirical standard deviation of the samples.
+We can then write the empirical entropy infered from the distribution of a single receptor:
+$$
+\tilde{H} = -\frac{1}{N_\text{sample}} \sum_{i=0}^{N_\text{sample}} \log[ \hat{p}(a_i)]
+$$
+Notice that $\tilde{H}(a_0, \cdots a_{N_\text{sample}})$ is a function of all the sampled activity
+#### 4.1.2 Chain Rule For the Gradient
+
+To compute the gradient of the entropy of a single receptor, we use the chaine rule:
+$$
+\frac{\partial \tilde{H}(\{a_i\})}{\partial w} = \sum_{i=0}^{N_\text{sample}}\frac{\partial a_i}{\partial w} \cdot \frac{\partial \tilde{H}}{\partial a_i}
+$$
+Where $a_i(c,E_o,E_c,\epsilon)$ is given by the MWC model, and $E_o$, $E_c$, $\epsilon$ come from a distribution defined in Section 3. 
+Notice that the gradient $\partial_{a_i}\tilde{H}$ can be computed semi-analytically from the infered $\hat{p}$.
+Now, writing the derivative of $a_i$:
+$$
+\frac{\partial a_i}{\partial w} = \frac{\partial a_i}{\partial E_c} \cdot \frac{\partial E_c}{\partial w} + \frac{\partial a_i}{\partial E_o} \cdot \frac{\partial E_o}{\partial w} + \frac{\partial a_i}{\partial \epsilon} \cdot \frac{\partial \epsilon}{\partial w}.
+$$
+In our case, because $E_c$, $E_o$, $\epsilon$ are independent variable, only one of the derivative is non-zero. Let us assume that $w = \mu_c$:
+$$
+\frac{\partial \tilde{H}}{\partial \mu_c} = \frac{\partial E_c}{\partial \mu_c}\sum_{i=0}^{N_\text{sample}} \frac{\partial a_i}{\partial E_c} \cdot \frac{\partial \tilde{H}}{\partial a_i}.
+$$
+Finally, we use the reparametrization trick:
+$$
+E_{c} = \mu_c + \zeta_i \sigma_c,
+$$
+where $\zeta \sim \mathcal{N}(0,1)$. In the last expression, everything is easy to compute.
+
+### 4.3 Whole Array Problem
+
+#### 4.3.1 The problem
+
+As dimensionality of the PDF increases, KDE methods becomes increasingly bad. Typically, the number of samples required for a descent estimate of the PDF grows as $10^D$ for a PDF of dimension D. As a result, we rely on an approximated loss function.
+
+#### 4.3.2 Approximated loss function
+
+Our algorithm We expand the entropy using the information expansion:
+
+$$H(\mathcal{A}) = \sum_r H(a^r) - \sum_{r<r'} I(a^r; a^{r'}) + \sum_{r<r'<r''} I(a^r; a^{r'}; a^{r''}) - \dots$$
+
+We first write the mutual information between two receptors activity, **assuming that they are Gaussian**, or not too far from Gaussian.
+
+$$
+I(a^r;a^{r'}) = \frac{\text{Cov}(a^{r},a^{r'})^2}{2\cdot \text{Var}(a^r) \cdot \text{Var}(a^{r'})}
+$$
+Where $\text{Cov}(a^{r},a^{r'}) = \mathbb{E}\left[a^{r} - \mathbb{E}[a^{r}] \right]\mathbb{E}\left[a^{r'} - \mathbb{E}[a^{r'}] \right]$, and $\text{Var}(a^{r}) = \text{Cov}(a^r,a^r)$.
+
+Thus, neglecting three-receptors correlations, we write the loss function as:
+
+$$
+\mathcal{L} = \underbrace{-\sum_r H(a^r)}_\text{optimize individual reeceptors} + \lambda \underbrace{\sum_{r<r'} \text{Cov}(a^r,a^{r'})^2}_\text{make them as diferent as possible}
+$$
+
+Ideally, we would like the receptors to be **independant**, which is the **strong condition**
+$$
+p(a^r,a^{r'}) = p(a^r)p(a^{r'}),
+$$
+In this approximation, we optimize for the receptors to be **uncorrelated** which is the **weak condition**:
+$$
+\text{Cov}(a^r,a^{r'}) = 0
+$$
+If independance implies uncorrelated, uncorrelated, in general, doesn't imply independance. There is only one case for which is the same, and it is for Gaussian distributed variables. Indeed, if $\forall i\neq j$ $\text{Cov}(a^r,a^{r'}) = 0$, then the covariance matrix $\Sigma$ is diagonal. The multivariate probability distribution:
+$$
+p(a^r,\cdots a^N) = \frac{1}{(2\pi)^{2/N}\text{det}(\Sigma)}\exp\left[ - \frac{1}{2} (\mathcal{A} - \mathbb{E}[\mathcal{A}]) \Sigma^{-1} (\mathcal{A} - \mathbb{E}[\mathcal{A}]) \right],
+$$
+where $\mathcal{A} = (a^r,\cdots a^N)$. Which can be easily separated as a product of the individual distribution.
+
+In the case of our optimization problem, we can write the entropy of a Gaussian variable as:
+$$
+H_\mathcal{G}(\mathcal{A}) = \frac{1}{2}\log((2\pi e)^{N}|\det(\Sigma)|)
+$$
+Maximizing $H_\mathcal{G}(\mathcal{A})$ implies maximizing $\det(\Sigma)$ which implies:
+- Maximizing the diagonal terms : $\text{Var}(a^r)$.
+- Minimizing the off-diagonal terms: $\text{Cov}(a^r,a^{r'})$.
+Instead of computing the determinant which is costly, we minimize the covariance terms.
+This is also called whitening.
+
+#### 4.3.3 Gradient of the Covariance
+
+The empirical covariance writes:
+$$
+C_{r,r'} = \frac{1}{N_\text{sample}-1} \sum_{i=0}^{N_\text{sample}} (a^r_i - \bar{a^r})((a^{r'}_i - \bar{a^{r'}})),
+$$
+with the covariance loss being: $\mathcal{L}_\text{cov} = \sum_{r<r'} C_{r,r'}^2$, which ends up being a function of $\{a_i^r\}_{\substack{r \in [1, N] \\ i \in [1, N_{\text{sample}}]}}$
+Thus we can write the gradient of the covariance loss:
+$$
+\frac{\partial \mathcal{L}_\text{cov}}{\partial w} = \sum_{i=1}^{N_\text{sample}} \sum_{r =1}^N \frac{\partial \mathcal{L}_\text{cov}}{\partial a_i^r} \cdot \frac{\partial a_i^r}{\partial w}.
+$$
+In the single receptor section, we explain how to compute $\frac{\partial a_i^r}{\partial w}$ with the chain rule.
+Notice that 
+$$
+\frac{\partial \mathcal{L}_\text{cov}}{\partial a_i^r} = \sum_{r'\neq r} C_{r,r'} (a_i^{r'} - \bar{a^{r'}}),
+$$
+takes the form of This is a restoring force proportional to the correlation $C_{r,r'}$​.
+
+<!--Consequently, the probability distribution of activation is the quantity that needs to be optimized. To do so, we compute its gradient with respect to any parameters of $\bar{M}$, or $\bar{\Sigma}$:
 $$
 \partial_w H(A) = \sum_\mathcal{A}  \partial_w p(\mathcal{A}) \left[\log(p(\mathcal{A}) + 1\right]
 $$
-
+-->
+<!--
 ### 4.1 Single receptor computation
 
 let us first compute the density probability of activation for an array made of a single receptor:
@@ -177,20 +336,27 @@ $$
 Leading to:
 $$
 \begin{aligned}
-p(a) &= \prod_\alpha \prod_{u\in\mathcal{U}} \int_{E_\alpha^u} \text{d}E_\alpha^u \sum_{f\in\mathcal{F}} p(E | \alpha, u, f) p(f) \int_\epsilon p(\epsilon) \text{d}\epsilon \frac{p(c)}{\| f'\left[\{ E_\alpha^u\}_{\alpha,u},\epsilon\right](c) \|} \\
-& = p(c)\int_\theta \text{d}\theta \frac{p(\theta)}{\| f'[\theta](c) \|}
+p(a) &= \prod_\alpha \prod_{u\in\mathcal{U}} \int_{E_\alpha^u} \text{d}E_\alpha^u \sum_{f\in\mathcal{F}} p(E | \alpha, u, f) p(f) \int_\epsilon p(\epsilon) \text{d}\epsilon \frac{p(c)}{\| f'\left[\{ E_\alpha^u\}_{\alpha,u},\epsilon\right](c) \|}
 \end{aligned}
 $$
 Where we simplified the notation in the last line:
 $$
 \int_\theta \text{d}\theta p(\theta) \hspace{0.25cm}\cdot\hspace{0.25cm} = \prod_\alpha \prod_{u\in\mathcal{U}} \int_{E_\alpha^u} \text{d}E_\alpha^u p(E | \alpha, u, f) \int_\epsilon p(\epsilon)\hspace{0.25cm}\cdot\hspace{0.25cm}
 $$
-### 4.2 Gradient of Information
+### 4.2 About the change of variable
+To summarize we have express the activation probability as:
+$$
+p(a) = \int_\theta p(a|\theta) p(\theta)\text{d}\theta
+$$
+Then, substituting $p(a|\theta) = \frac{p(c)}{\|f'\|}$ in the integral. However, 
+-->  
 
+<!--
 The entropy reads:
 $$
 H(a) = \mathbb{E}[p(a)]
 $$
+-->
 <!--
 replacing the previously derived formula:
 $$
@@ -202,7 +368,7 @@ H(a) &= \int_a \text{d}a \int_\theta \text{d}\theta p(\theta) p(a|\theta) \log\l
 \end{aligned}
 $$
 -->
-
+<!--
 $$
 H(a)  = \mathbb{E}\left[ \log[p(a)]\right] =  \mathbb{E} \left[ \log p(c) \left( \int_\theta \frac{p(\theta)}{\| f'[\theta](c) \|} \text{d} \theta \right) \right] = \mathbb{E}[p(c)] + \mathbb{E}\left[ \log \left( \int_\theta \frac{p(\theta)}{\| f'[\theta](c) \|} \text{d}\theta \right)\right] attention c'est faux
 $$
@@ -214,9 +380,9 @@ $$
 \partial_w H(a) = \partial_w \left[ \mathbb{E}\left[ \log \left( \int_\theta \frac{1}{\| f'[\theta](c) \|} \text{d}\theta \right) \right]\right]
 $$
 Using the reparametrization trick, we see that the computation of the average 
+-->
 
-### 4.3 Computation on a Whole Array
-
+<!--
 To compute the probability of observing a specific activity values $\mathcal{A}$, we write:
 $$
 \begin{aligned}
@@ -246,12 +412,34 @@ $$
 $$
 \frac{\partial H(\mathcal{A})}{\partial w} = \frac{\partial}{\partial w}\left\{ E\left[ \ln\left[\int d\theta \frac{p(\theta)}{F'(c,\theta)} \right] \right] \right\}. 
 $$
-
+-->
 
 ## 5. Fixed concentration problem
 
 We consider an array that respond to a fixed concentration.
 
+1. The Analytical Solution
+
+First, we define the normalized activity $y(c) = p_o(c) / p_\text{max}$.
+The Hill plot maps $\log(c)$ against $\log\left(\frac{y}{1-y}\right)$. The Hill coefficient is the derivative:
+
+$$
+n_H = \left. \frac{d \log\left(\frac{y}{1-y}\right)}{d \log c} \right|{c = EC{50}}
+$$
+
+If you take your simplified probability equation, compute $y(c)$, and run it through this derivative, a remarkably elegant physical result drops out:
+
+$$
+n_H = k_\text{sub} - \frac{\sum_{u=1}^{k_\text{sub}} \theta_u(c) - k_\text{sub} f_c(c)}{1 - f_c(c)} \Bigg|{c = EC{50}}
+$$
+
+
+
+$\theta_u(c) = \frac{c/K_c^{(u)}}{1 + c/K_c^{(u)}}$ is the occupancy of subunit $u$ if the channel were locked in the closed state.
+
+$f_c(c) = \prod_{u} \theta_u(c)$ is the probability that the channel is fully bound while in the closed state.
+
+<!--
 ### 5.1 Empirical measurement
 
 We start with a matrix of response $\bar{R} \in \mathbb{R}^{N \times L}$, where $N$ is the number of receptors, and $L$ the number of Ligand. We compute the mutual information between the activity of the array $\mathcal{A}$ and the **identity** of the ligand, thus dismissing the information of the concentration:
@@ -262,7 +450,7 @@ because the activity of the array is deterministically determined by the identit
 
 Each receptor's activity consist in a single number $a\in[0,1]$. We assume that the system only sees a binned version of this signal into $n_b$ bins. Thus, instead of a continuous number between $[0,1]$ we consider the activity to be a boolean array of size $n_b$.
 
-
+-->
 
 <!--
 ## 4. Information of an Odor Signal
@@ -277,45 +465,12 @@ MI(\mathcal{L}; \mathcal{A}) = H(\mathcal{A}) - H(\mathcal{A}|\mathcal{L}) = H(\
 $$
 Where $H(\mathcal{A})$ is the entropy of the activation patterns and $H(\mathcal{A}|\mathcal{L})$ is the conditional entropy that is 0 without noise
 Thus, our goal is to maximize the entropy of $\mathcal{A}$.
-
-## 5. Loss function
-### 5.1 Full loss function
-
-To maximize the entropy of $\mathcal{A}$, we need to compute the gradient wrt $w_i$: $\nabla_w H(\mathcal{A}) = \nabla_w \mathbb{E}_\mathcal{A}\left\{\log[p(\mathcal{A})] \right\}$.
-Recognizing that $\mathcal{A} = F[\theta](c) = (f_0[\theta_0](c), \cdots , f_r[\theta_r](c), \cdots, f_{N_r}[\theta_{N_r}](c))$.
-For each $f_i$, we write:
-$$
-p(a_i) = \int \text{d}\theta_i p(\theta_i) p(a_i |\theta_i) = \int \text{d}\theta_i p(\theta_i) \frac{p(c)}{f_i'[\theta_i](c)}
-$$
-And thus
-$$
-\nabla_{w_i}\mathbb{E}_\mathcal{A}\left[ \log(p(\mathcal{A})\right] = 
-$$
-
-### 5.2 Approximated loss function
-
-Our algorithm We expand the entropy using the information expansion:
-
-$$H(\mathcal{A}) = \sum_i H(a_i) - \sum_{i<j} I(a_i; a_j) + \sum_{i<j<k} I(a_i; a_j; a_k) - \dots$$
-
-We first write the mutual information between two receptors activity, **assuming that they are Gaussian** (which is not specially true, but it's not so important):
-
-$$
-I(a_i;a_j) = \frac{\text{Cov}(a_i,a_j)^2}{2\cdot \text{Var}(a_i) \cdot \text{Var}(a_j)}
-$$
+-->
 
 
-Thus, neglecting three-receptors correlations, we write the loss function as:
 
-$$
-L = \underbrace{-\sum_i H(a_i)}_\text{optimize individual reeceptors} + \lambda \underbrace{\sum_{i<j} \text{Cov}(a_i,a_j)^2}_\text{make them as diferent as possible}
-$$
 
-Now to compute the gradient of the loss function : $\nabla_w L$, we should compute $\forall a_i$:
-$$
-\nabla_{w_j} \mathbb{E}_{a_i}\left[ \log[p(a_i)]\right] = \delta_{i,j} \nabla_{w_j} \int_c \text{d}c \int \text{d}\theta_i p(\theta_i) \frac{p(c)}{f'[\theta](c)} \log\left[ \int_\theta \text{d}\theta \right]
-$$
-
+<!--
 ## 6. Optimization algorithm
 
 1. Start from a random matrix of interaction $\bar{M}$, and $\bar{\Sigma}$.
@@ -343,6 +498,7 @@ $$
     |-> In general, and optimal array of sensor must satisfy two conditions to respond optimally to a pool of ligand : (1) be activated half of the time. (2) Any pair of receptors must be uncorrelated [!!! already over !!!].
     |-> Could this condition explain, at least partially why some receptors are "always" open, vs other are seemingly never responding ?
 -->
+
 ### References 
 
 [^1]: Einav, Tal, and Rob Phillips. “Monod-Wyman-Changeux Analysis of Ligand-Gated Ion Channel Mutants.” The Journal of Physical Chemistry B 121, no. 15 (2017): 3813–24. https://doi.org/10.1021/acs.jpcb.6b12672.
