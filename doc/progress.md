@@ -129,7 +129,7 @@ $$
 p_o^{(r,l)}(c) = \frac{\prod_u \left(\frac{c}{\tilde{K}_o^{u,l}}\right)}{\prod_u\left(\frac{c}{\tilde{K}_o^{(u,l)}} \right) + \prod_u\left(1+\frac{c}{K_c^{(u,l)}} \right)},
 $$
 where $\tilde{K}_o = K_o e^{\beta \epsilon }$
-
+<!--
 ### 2.4 Adimensional activation curve
 
 We now write the final activation curve by adimensionalizing the concentration using $EC_{50}$ the concentration at half activation. In the limit $1\ll e^{\beta \epsilon/k_\text{unit}} \ll \left(\frac{K_c}{K_o}\right)^{k_\text{unit}}$, we have
@@ -141,7 +141,7 @@ $$
 p_o^{(r,l)}(x) = \frac{x^{k_\text{unit}}}{x^{k_\text{unit}} + \prod_{u=1}^{k_\text{unit}}\left( 1  + \frac{x[EC_{50}^{(u,l)}]}{K_c^{(u,l)}}\right)} = \frac{x^{k_\text{unit}}}{x^{k_\text{unit}} + \prod_{u=1}^{k_\text{unit}}\left( 1  + \delta^{(u,l)} x\right)},
 $$
 where $x = c /$
-
+-->
 
 ## 3. Generating Ligand/Unit interactions : The Environment
 
@@ -463,7 +463,96 @@ $$
 $$
 -->
 
-## 5. Fixed concentration problem
+## 5. Threshold-Based Activation and Discrete Information
+
+In many sensory systems, downstream neural processing relies on highly thresholded, binned, or even binary signals (e.g., a neuron firing an action potential or remaining silent). Optimizing a receptor array for continuous outputs (differential entropy) yields a fundamentally different geometry than optimizing for discrete, thresholded outputs (Shannon entropy).
+
+### 5.1 Simplifying the Heteromer $EC_{50}$
+
+Building on the adimensional activation curve from Section 2.4, we operate in the limit where the activation of a heteromeric receptor is strictly governed by its $EC_{50}$.
+The half-activation concentration for a heteromer is the geometric mean of its individual subunit affinities:
+
+$$EC_{50}^{(r,\ell)} = \left( \prod_{u=1}^{k_\text{sub}} \tilde{K}_o^{(u,\ell)} \right)^{1/k_\text{sub}}$$
+
+By taking the natural logarithm and substituting our energy formulation $\tilde{K}_o = \exp(E_o)$, we find that the activation threshold of a heteromer in energy space is simply the arithmetic average of its sub-units' open-state energies:
+
+$$\ln(EC_{50}^{(r,\ell)}) = \frac{1}{k_\text{sub}} \sum_{u=1}^{k_\text{sub}} E_o^{(u,\ell)}$$
+
+This vastly simplifies the biophysics: we can completely bypass the calculation of closed-state energies ($E_c$) and evaluate the array strictly on the open-state geometry.
+
+### 5.2 Continuous Relaxation of Discrete Activation
+
+A true discrete sensor acts as a Heaviside step function: it fires if $\ln(c) > \ln(EC_{50})$ and remains silent otherwise. Because step functions have zero gradients, we cannot optimize them directly using backpropagation. Instead, we use a temperature-scaled Sigmoid as a continuous relaxation:
+
+$$p_1 = \sigma\left( \frac{\ln(c) - \ln(EC_{50})}{T} \right)$$
+
+As $T \to 0$, this function approaches a perfect step function. Crucially, we change our interpretation of this value: $p_1$ is no longer a "continuous physical current", but rather the **probability that the thresholded receptor fires**.
+
+### 5.3 Differentiable Binning (Soft Histogram)
+
+To compute the exact discrete Shannon entropy for an arbitrary number of downstream activation bins $K$ (where $K=2$ is the binary case), we use a "Soft Histogram" trick.
+For a given receptor, we define $K$ bin centers evenly spaced between $0.0$ and $1.0$. The probability of the receptor's activity $a$ falling into bin $k$ with center $c_k$ is computed using a temperature-scaled Softmax over the squared Euclidean distances:
+
+$$P(\text{bin}_k) = \frac{\exp\left(-(a - c_k)^2 / T_{bin}\right)}{\sum_{j=1}^K \exp\left(-(a - c_j)^2 / T_{bin}\right)}$$
+
+This differentiable assignment allows us to analytically compute the exact marginal Shannon entropy for each receptor, normalized to a maximum of $1.0$ unit of information by using base-$K$ logarithms:
+
+$$H(a^r) = -\sum_{k=1}^K P(\text{bin}_k) \log_K P(\text{bin}_k)$$
+
+By maximizing these exact 1D marginal entropies while minimizing the continuous linear covariance between pairs of receptors ($\text{Cov}(a^r, a^{r'}) \to 0$), we can efficiently optimize the full array's joint entropy without the computational explosion of calculating the full $K^N$ state space.
+
+## 5. Environmental Constraints on Array Diversity and Information Capacity
+
+A fundamental challenge in optimizing an array of chemosensors is that the mutual information maximized by the array, $I(\mathcal{A};(c,\ell)) = H(\mathcal{A}) - H(\mathcal{A} | (c,\ell))$, is strictly upper-bounded by the inherent complexity of the environment. Because we consider the mapping between affinities and activity as deterministic and noiseless ($H(\mathcal{A} | (c,\ell)) = 0$), the optimization focuses entirely on maximizing the array's entropy $H(\mathcal{A})$. 
+
+However, if the environment lacks sufficient variance or dimensionality, adding more receptors (or increasing combinatorial diversity through heteromerization) will yield diminishing returns. The array's entropy will aggressively plateau as the sensors are forced to extract redundant information from a limited probability space.
+
+### 5.1 Differential Entropy of the Environment
+
+To quantify the absolute amount of "surprise" available to the array, we must compute the differential entropy of the environment. A single ligand encounter from family $f$ is defined by a random vector $\mathbf{X}_f$ encompassing its concentration and its interaction energies with every unit $u$:
+$$\mathbf{X}_f = \left(c, E_o^{1,f}, \dots, E_o^{n_\text{unit},f}, E_c^{1,f}, \dots, E_c^{n_\text{unit},f}\right)$$
+
+Operating in the threshold-based activation limit where closed-state energies can be bypassed, this simplifies to $\mathbf{X}_f = \left(c, E_o^{1,f}, \dots, E_o^{n_\text{unit},f}\right)$.
+
+Because the energy values are drawn independently from Normal distributions $E_o^{(u,f)} \sim \mathcal{N}(\mu_o^{(u,f)}, \sigma_o^{(u,f)})$, the exact differential entropy for a single ligand family $f$ is the sum of the marginal differential entropies. 
+
+**For the Normal Concentration Model** ($c \sim \mathcal{N}(\mu_c^f, \sigma_c^f)$):
+$$h(\mathbf{X}_f) = \frac{1}{2} \log_2\left( 2 \pi e (\sigma_c^f)^2 \right) + \sum_{u=1}^{n_\text{unit}} \frac{1}{2} \log_2\left( 2 \pi e (\sigma_o^{(u,f)})^2 \right)$$
+
+**For the LogNormal Concentration Model** ($\log_{10}(c) \sim \mathcal{N}(\mu_c^f, \sigma_c^f)$):
+$$h(\mathbf{X}_f) = \left[ \frac{1}{2} \log_2\left( 2 \pi e (\sigma_c^f \ln 10)^2 \right) + (\mu_c^f \ln 10) \log_2(e) \right] + \sum_{u=1}^{n_\text{unit}} \frac{1}{2} \log_2\left( 2 \pi e (\sigma_o^{(u,f)})^2 \right)$$
+
+When the environment contains $N_\mathcal{F}$ equiprobable families, the global distribution is a Gaussian Mixture Model. Assuming the families are well-separated in the latent space, the total differential entropy is approximately:
+$$h(\mathbf{X}) \approx \frac{1}{N_\mathcal{F}} \sum_{f=1}^{N_\mathcal{F}} h(\mathbf{X}_f) + \log_2(N_\mathcal{F})$$
+
+### 5.2 The Discretization Bottleneck: 1D Toy Model
+
+Receptors do not divide the continuous environment into uniform volume bins. Instead, the threshold equation $\ln(EC_{50}^{(r,\ell)}) = \frac{1}{k_\text{sub}} \sum_{u=1}^{k_\text{sub}} E_o^{(u,\ell)}$ acts as a hyperplane that slices the probability mass.  To demonstrate how a simple environment forces an artificial plateau in array entropy, we evaluate a 1-dimensional, threshold-based toy model.
+
+Assume a highly simplified environment containing only 1 ligand family, where the sole variable is the log-concentration $x = \ln(c)$, drawn from a Uniform distribution $x \sim \mathcal{U}(0, L)$. 
+
+We deploy an array of $N$ receptors. In the $T \to 0$ limit of the continuous relaxation, the receptors behave as perfect Heaviside step functions:
+$$A_r = \begin{cases} 1 & \text{if } x > \theta_r \\ 0 & \text{if } x < \theta_r \end{cases}$$
+where $\theta_r$ is the optimized threshold of receptor $r$.
+
+An array of $N$ independent binary sensors has a theoretical maximum Shannon capacity of $H_{max} = N$ bits. To maximize entropy, the optimization algorithm perfectly distributes the $N$ thresholds across the interval $[0, L]$, creating equiprobable bins. 
+
+However, slicing a 1-dimensional line with $N$ points mathematically yields exactly $N+1$ segments. Because every receptor measures the identical scalar variable $x$, their activations are strictly nested. If we sort the thresholds such that $\theta_1 < \theta_2 < \dots < \theta_N$, the array can only output $N+1$ valid binary states out of the $2^N$ theoretical possibilities:
+* $x \in (0, \theta_1) \implies \mathcal{A} = (0, 0, 0, \dots, 0)$
+* $x \in (\theta_1, \theta_2) \implies \mathcal{A} = (1, 0, 0, \dots, 0)$
+* $x \in (\theta_2, \theta_3) \implies \mathcal{A} = (1, 1, 0, \dots, 0)$
+* ...
+* $x \in (\theta_N, L) \implies \mathcal{A} = (1, 1, 1, \dots, 1)$
+
+Because the optimization enforces equal probability $p = 1/(N+1)$ for each valid state, the actual joint entropy of the fully optimized array is:
+$$H_{actual}(\mathcal{A}) = -\sum_{i=1}^{N+1} p_i \log_2(p_i) = \log_2(N+1) \text{ bits}$$
+
+### 5.3 Consequences for Array Optimization
+
+The disparity between $H_{max} = N$ and $H_{actual} = \log_2(N+1)$ reveals the origin of the mutual information plateau. In a 1D environment, moving from 15 receptors to 26 receptors increases the theoretical capacity from 15 to 26 bits, but the actual entropy merely creeps from 4 bits to 4.75 bits. The covariance penalty is mathematically incapable of orthogonalizing the receptors because the physical geometry of the environment prohibits it.
+
+To genuinely assess the coding capacity of large receptor arrays and the mutual information generated by combinatorial heteromers, the environment's complexity must be scaled up. By increasing the number of ligand families ($N_\mathcal{F}$), the dimensionality of the Chemical Latent Space ($D$), and the standard deviations of the intra-family noise ($\sigma_\alpha^{(u,f)}$ and $\sigma_c^f$), the environment shifts from a 1D line to a high-dimensional volume. This allows the $N$ hyperplanes generated by the receptors to intersect orthogonally, breaking the logarithmic bottleneck and utilizing the full theoretical capacity of the array.
+## 6. Fixed concentration problem
 
 We consider an array that respond to a fixed concentration.
 
@@ -548,6 +637,116 @@ Thus, our goal is to maximize the entropy of $\mathcal{A}$.
     |-> Could this condition explain, at least partially why some receptors are "always" open, vs other are seemingly never responding ?
 -->
 
+## Appendix: The Soft Monte Carlo Trick for High-Dimensional Joint Entropy
+
+To evaluate the true joint entropy of a fully optimized array of $N$ receptors, we must calculate the expected value of the negative log-probability over all $K^N$ possible discrete states. For $N=26$ and $K=2$, this requires summing over $\approx 67$ million states, which is computationally impossible to perform sequentially.
+
+### The Empirical Trap ($\log_2 B$ Ceiling)
+
+A naive solution is to rely on the empirical batch distribution: pass a batch of $B$ ligands, draw hard binary states (0s and 1s) for each, and count the frequencies of the observed states. However, the maximum entropy of $B$ samples is $\log_K(B)$. For a typical batch size of $B=2000$, the empirical joint entropy hits a hard ceiling at $\approx 10.96$ bits. The estimator becomes completely blind to whether the array is producing 15, 20, or 26 bits of information.
+
+### Semi-Analytical Monte Carlo Integration
+
+To break the batch-size ceiling, we separate the *empirical sampling of the states* from the *exact analytical evaluation of their probability*.
+
+1. **Empirical Sampling:** We evaluate the continuous activation probabilities for a batch of $B$ ligands. From these probabilities, we sample exactly one discrete array state $\mathbf{a}_i$ per ligand. This provides a representative Monte Carlo sample of the massive $K^N$ space.
+2. **Exact Conditional Probability:** We do not count how many times state $\mathbf{a}_i$ appeared. Instead, we use the continuous neural network outputs to calculate the *exact analytical probability* that a given ligand $\mathbf{x}_j$ would produce state $\mathbf{a}_i$. Because the receptors are independent given a specific ligand, this is simply the product of their independent continuous probabilities:
+
+$$P(\mathbf{a}_i \mid \mathbf{x}_j) = \prod_{r=1}^N P(A_r = a_{i,r} \mid \mathbf{x}_j)$$
+
+
+3. **Batch Averaging:** We calculate the true global probability of the sampled state by averaging its exact conditional probabilities across all $B$ ligands in the environment batch:
+
+$$\hat{P}_{batch}(\mathbf{a}_i) = \frac{1}{B} \sum_{j=1}^B P(\mathbf{a}_i \mid \mathbf{x}_j)$$
+
+
+
+By averaging tiny, exact continuous probabilities (e.g., $10^{-14}$) rather than relying on discrete counting limits ($1/B$), $\hat{P}_{batch}(\mathbf{a}_i)$ can accurately represent astronomically rare states.
+
+The true joint entropy is then recovered via the Monte Carlo expected value:
+
+
+$$H(\mathcal{A}) \approx \frac{1}{B} \sum_{i=1}^B -\log_K \hat{P}_{batch}(\mathbf{a}_i)$$
+
+
+This semi-analytical estimator reduces $O(K^N)$ computations to a single vectorized tensor multiplication $O(B^2 \times N)$, allowing for millisecond evaluation of the exact Mutual Information proxy for infinitely large arrays.
+
+
+
 ### References 
 
 [^1]: Einav, Tal, and Rob Phillips. “Monod-Wyman-Changeux Analysis of Ligand-Gated Ion Channel Mutants.” The Journal of Physical Chemistry B 121, no. 15 (2017): 3813–24. https://doi.org/10.1021/acs.jpcb.6b12672.
+
+<!--
+### Soft histogram trick
+
+If you look closely at what happens when `n_bins=2` (centers at `0.0` and `1.0`), the Softmax expansion evaluates to:
+
+
+$$P(\text{bin}_1) = \frac{\exp(-(a - 1)^2 / T)}{\exp(-a^2 / T) + \exp(-(a - 1)^2 / T)}$$
+
+If you simplify the algebra, this is mathematically identical to a **second Sigmoid layer**:
+
+
+$$P(\text{bin}_1) = \frac{1}{1 + \exp((1 - 2a) / T)}$$
+
+This is an incredibly beautiful property! It means the Soft Histogram doesn't just "guess" the bins. For the binary case, it behaves exactly like the perfect threshold probability mechanism we originally discussed. It perfectly sharpens values $a > 0.5$ into the $1.0$ bin, and values $a < 0.5$ into the $0.0$ bin. As you increase `n_bins` to 3, 4, or 10, it automatically constructs the continuous math necessary to slice the sigmoidal output into $K$ independent states.
+
+You now have a loss function that dynamically scales to whatever resolution the downstream octopus neural processing requires!
+-->
+
+<!--
+To compute the exact theoretical lower bound of the covariance between two receptors sharing $m$ subunits, we must establish the limits of the optimization. The strict lower bound occurs when the optimization perfectly orthogonalizes the *non-shared* subunits, meaning their individual linear covariances are driven entirely to zero. 
+
+What remains is the mathematically irreducible correlation generated by the $m$ shared subunits and the shared environmental concentration.
+
+### 1. The Continuous Margin Covariance
+
+In the limit where $T \to 0$, activation is determined by the continuous margin $M_r$, which compares the ligand concentration to the arithmetic average of the sub-units' open-state energies:
+
+$$M_r = \ln(c) - \frac{1}{k_\text{sub}} \sum_{u=1}^{k_\text{sub}} E_o^{(u)}$$
+
+Let two receptors $r_1$ and $r_2$ share $m$ subunits, forming the set $S$. They each have non-shared subunits forming sets $U_1$ and $U_2$. The energies are drawn from $E_o \sim \mathcal{N}(\mu_o, \sigma_o^2)$.
+
+We compute the covariance of their continuous margins:
+$$\text{Cov}(M_1, M_2) = \text{Var}(\ln c) + \frac{1}{k_\text{sub}^2} \text{Cov}\left(\sum_{s \in S} E_o^{(s)}, \sum_{s \in S} E_o^{(s)}\right) + 0$$
+
+The zero at the end represents the assumption that the optimizer has successfully driven the covariance of the non-shared units $U_1$ and $U_2$ to zero. 
+
+Assuming uniform intra-family noise for the energies ($\sigma_o^2$) and concentration ($\sigma_c^2$), the covariance and variance of the margins are:
+$$\text{Cov}(M_1, M_2) = \sigma_c^2 + \frac{m}{k_\text{sub}^2}\sigma_o^2$$
+$$\text{Var}(M_1) = \text{Var}(M_2) = \sigma_c^2 + \frac{1}{k_\text{sub}}\sigma_o^2$$
+
+This gives the exact lower-bound correlation coefficient $\rho_M$ of the continuous margins:
+$$\rho_M = \frac{\sigma_c^2 + \frac{m}{k_\text{sub}^2}\sigma_o^2}{\sigma_c^2 + \frac{1}{k_\text{sub}}\sigma_o^2}$$
+
+### 2. The Binarized Covariance (Exact Lower Bound)
+
+Your optimization seeks to maximize individual receptor entropy, meaning the optimizer attempts to center the thresholds such that $P(A_r = 1) = 0.5$ (each receptor fires 50% of the time).
+
+When two centered, correlated continuous normal variables ($M_1, M_2$) are passed through a Heaviside step function to generate binary outputs ($A_1, A_2$), the covariance of the resulting binary states is governed analytically by Price's Theorem (the Arcsine Law for thresholded Gaussians):
+
+$$\text{Cov}(A_1, A_2) = \frac{1}{2\pi} \arcsin(\rho_M)$$
+
+Substituting $\rho_M$, the exact theoretical lower bound for the binary covariance is:
+$$\text{Cov}(A_1, A_2) \ge \frac{1}{2\pi} \arcsin\left( \frac{\sigma_c^2 + \frac{m}{k_\text{sub}^2}\sigma_o^2}{\sigma_c^2 + \frac{1}{k_\text{sub}}\sigma_o^2} \right)$$
+
+### 3. Simplified Limits
+
+**Case A: Fixed Concentration Array**
+If the array operates under a fixed concentration experiment, the variance of the concentration is zero ($\sigma_c^2 = 0$). The equation isolates the stoichiometric correlation of the $k_\text{sub}=5$ pentamer structure:
+$$\text{Cov}(A_1, A_2) \ge \frac{1}{2\pi} \arcsin\left( \frac{m}{k_\text{sub}} \right)$$
+
+Evaluating this fixed-concentration floor for a pentamer ($k_\text{sub}=5$):
+* $m=1$ subunit shared: $\text{Cov}_{min} \approx 0.032$
+* $m=2$ subunits shared: $\text{Cov}_{min} \approx 0.065$
+* $m=3$ subunits shared: $\text{Cov}_{min} \approx 0.102$
+* $m=4$ subunits shared: $\text{Cov}_{min} \approx 0.147$
+
+**Case B: Concentration Noise Dominated**
+If the environmental concentration variance is extremely high relative to the intra-family energy variance ($\sigma_c^2 \gg \sigma_o^2$), the shared concentration dominates the signal:
+$$\rho_M \to 1 \implies \text{Cov}(A_1, A_2) \to \frac{1}{2\pi} \arcsin(1) = 0.25$$
+A covariance of 0.25 is the mathematical maximum for two binary variables with $P=0.5$ (meaning they are perfectly identical). 
+
+This proves analytically why you must set the `base_tolerance` and `overlap_scaling` values in your modified loss function exactly along the curve of $\frac{1}{2\pi} \arcsin\left(\frac{m}{k_\text{sub}}\right)$. Penalizing covariance below this boundary forces the optimizer to attempt mathematically impossible uncoupling.
+-->
