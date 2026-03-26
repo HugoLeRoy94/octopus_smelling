@@ -750,3 +750,7 @@ A covariance of 0.25 is the mathematical maximum for two binary variables with $
 
 This proves analytically why you must set the `base_tolerance` and `overlap_scaling` values in your modified loss function exactly along the curve of $\frac{1}{2\pi} \arcsin\left(\frac{m}{k_\text{sub}}\right)$. Penalizing covariance below this boundary forces the optimizer to attempt mathematically impossible uncoupling.
 -->
+
+## Next:
+- re-train the model of latent chemical space to try to look at the effective distance between chemicals ?
+- test the heteromerization on toy deep learning models ?
