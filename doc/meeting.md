@@ -25,3 +25,21 @@ This is different from previous approaches, where the agent tries to measure the
     -> Need to model the environment
     -> Classify the chemical in familly ?
 -> Looking for optimal array to specific optimization strategy might reveal why so many homomers do not respond.
+
+# Meeting post 03/30/2026
+Pablo:
+-> Want to meet next week.
+-> Like Fig3 and 5
+
+Agnese:
+-> Influence of the model of the environment
+
+-> "Define complex enough" -> When independant receptors managed to behave like a perfect array.
+-> "compare the distribution of activities" -> That's what I do, using the entropy. This is too high dimensional, you cannot compare them using, mean or std deviation.
+-> "Discuss with LCSL" -> why not, but I would like to have a dialogue with one guy, not an endless meeting to talk about general ideas.
+-> "drop the sparse chemical space" -> what does sparse means ?
+
+Nick:
+-> want to make one final figure
+===> Do they have genes expression of nicotinic receptors in a vertebrate ?
+|-> Ok, So comparing the genes expression of nicotinic neurotransmitter, to the sensor of octopus could help us to support the question of whether these sensors have been reused by the octopus for sensory purpose ?

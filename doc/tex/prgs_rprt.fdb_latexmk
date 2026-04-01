@@ -1,15 +1,15 @@
 # Fdb version 4
-["bibtex prgs_rprt"] 1774349873.30159 "prgs_rprt.aux" "prgs_rprt.bbl" "prgs_rprt" 1774515028.05536 0
-  "./prgs_rprtNotes.bib" 1774515027.73186 104 4d8bb863c86f3d7b03a471e9d4707f34 ""
+["bibtex prgs_rprt"] 1774349873.30159 "prgs_rprt.aux" "prgs_rprt.bbl" "prgs_rprt" 1774528896.50162 0
+  "./prgs_rprtNotes.bib" 1774528896.08965 104 4d8bb863c86f3d7b03a471e9d4707f34 ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/revtex/apsrev4-2.bst" 1601932770 69609 e9dea59f0e753ccda3ddc8f5806d846d ""
   "prgs_rprt.aux" 1774364096.21746 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
   (generated)
   "prgs_rprt.bbl"
   "prgs_rprt.blg"
   (rewritten before read)
-["pdflatex"] 1774515027.1393 "/mnt/hcleroy/PostDoc2/octopus_smelling/doc/prgs_rprt.tex" "prgs_rprt.pdf" "prgs_rprt" 1774515028.05562 0
+["pdflatex"] 1774528895.41828 "/mnt/hcleroy/PostDoc2/octopus_smelling/doc/prgs_rprt.tex" "prgs_rprt.pdf" "prgs_rprt" 1774528896.50192 0
   "/etc/texmf/web2c/texmf.cnf" 1772314267.96534 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/mnt/hcleroy/PostDoc2/octopus_smelling/doc/prgs_rprt.tex" 1774515025.96981 28984 e990443da89a90ab323d2dfd0c27b45d ""
+  "/mnt/hcleroy/PostDoc2/octopus_smelling/doc/prgs_rprt.tex" 1774528894.12064 29627 f776ca3ebccfcdbb8d5c4cacfa3238f5 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/ecbx0500.tfm" 1136768653 3584 0913860e6fa2bdf78ecaf460b391112b ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/ecbx0600.tfm" 1136768653 3584 ad9fcbc26a2a7bccd6d08b0a5792fbe0 ""
@@ -150,10 +150,10 @@
   "MI_sensors_10fam.pdf" 1774452256.41776 30099 b2038eabe5f82d8f17a0b0d0827b4ca5 ""
   "MI_sensors_1fam.pdf" 1774449113.54816 33100 42a5e3f105807b77e7b92d86dc51a7d1 ""
   "entropy_distance.pdf" 1774361988.62339 16829 be43e8ea52416572c011e228b6284b5c ""
-  "prgs_rprt.aux" 1774515027.72987 7062 5c63fd0461ec673c5d3beac539a8a76b "pdflatex"
+  "prgs_rprt.aux" 1774528896.08865 7232 bd45c649709f81eb5e858b25825f29fa "pdflatex"
   "prgs_rprt.bbl" 1774349873.47373 0 d41d8cd98f00b204e9800998ecf8427e "bibtex prgs_rprt"
-  "prgs_rprt.out" 1774515027.73087 2603 6745b3cbb70dc8a5190e4c9ef25aced1 "pdflatex"
-  "prgs_rprt.tex" 1774515025.96981 28984 e990443da89a90ab323d2dfd0c27b45d ""
+  "prgs_rprt.out" 1774528896.08965 2603 6745b3cbb70dc8a5190e4c9ef25aced1 "pdflatex"
+  "prgs_rprt.tex" 1774528894.12064 29627 f776ca3ebccfcdbb8d5c4cacfa3238f5 ""
   (generated)
   "prgs_rprt.aux"
   "prgs_rprt.log"
